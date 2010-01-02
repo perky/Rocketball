@@ -6,6 +6,10 @@ GM.Email 	= ""
 GM.Website 	= ""
 GM.Help		= "Use your GravGun to punt the rocket ball to the other team."
 GM.Data 	= {}
+
+GM.PuntLength = 160
+GM.PuntPowerMax = 160
+GM.PuntPowerMin = 135
  
 DeriveGamemode( "fretta" )
 IncludePlayerClasses()				-- Automatically includes files in "gamemode/player_class"

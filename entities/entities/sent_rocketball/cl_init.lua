@@ -64,10 +64,14 @@ function ENT:Think()
 	particle:SetRollDelta( 0 )
 	particle:SetAirResistance(0)
 	
-	if team == 1 then
-		particle:SetColor( rcolor,rcolor,240 )
+	if team != nil then
+		if team == 1 then
+			particle:SetColor( rcolor,rcolor,240 )
+		else
+			particle:SetColor( 240,rcolor,rcolor )
+		end
 	else
-		particle:SetColor( 240,rcolor,rcolor )
+		particle:SetColor( rcolor,rcolor,rcolor )
 	end
 			
 	emitter:Finish()

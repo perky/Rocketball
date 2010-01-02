@@ -6,7 +6,9 @@ ENT.Team = TEAM_RED
 ENT.Target = nil
 ENT.Speed = 1
 ENT.SoundFile 	= "npc/scanner/combat_scan_loop1.wav"
-ENT.Pitch			= 100
+ENT.Pitch		= 100
+ENT.CanRespawn  = true
+ENT.SnapNeck	= false
 
 function ENT:SpawnFunction( ply, tr )
  
@@ -114,7 +116,8 @@ end
    Name: Physics
 ---------------------------------------------------------*/
 function ENT:PhysicsUpdate()
-	if self.Target then
+	if self.Target and GAMEMODE:InRound() then
+		self.PhysObj:EnableGravity(false)
 		local VectorToTarget	= self.Target:EyePos() - self.Entity:GetPos()
 		local AngleToTarget	= VectorToTarget:Angle()
 		local DistanceToTarget = math.min(VectorToTarget:Length(), 5000)
@@ -129,11 +132,15 @@ function ENT:PhysicsUpdate()
 		
 		if DistanceToTarget < 10 then
 			if self.Target:IsBot() then
+				self.SnapNeck = false
+				SetGlobalString("CustomHudText", "")
 				self:OnPunt( self.Target )
 			else
 				self:Explode()
 			end
 		end
+	else
+		self.PhysObj:EnableGravity(true)
 	end
 end
 
@@ -160,7 +167,11 @@ function ENT:PhysicsCollide( data, physobj )
 end
 
 function ENT:Explode()
-	if(!self.Exploded) then
+	if self.SnapNeck then
+		self.Target:SetEyeAngles( self.Target:EyeAngles() + Angle(0,0,180) )
+		self:OnPunt( self.Target )
+		self.SnapNeck = false
+	elseif not self.Exploded then
 			local expl=ents.Create("env_explosion")
 			expl:SetPos(self.Entity:GetPos())
 			expl:SetName("Missile")
@@ -175,7 +186,11 @@ function ENT:Explode()
 			self.Exploded = true
 			
 			self.Entity.Sound:Stop()
-			GAMEMODE:PreSpawnRocketball()
+			
+			if self.CanRespawn then
+				GAMEMODE:PreSpawnRocketball()
+			end
+			
 			self.Entity:Remove()
 		end
 end
