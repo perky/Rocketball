@@ -144,8 +144,20 @@ end
 function GM:SpawnRocketball()
 	if not GAMEMODE:InRound() then return end
 	
+	local spawnpoints = {}
+	for k,v in pairs( ents.FindByClass("fa_dodgeball_spawner") ) do
+		table.insert(spawnpoints, v)
+	end
+	
 	local ent = ents.Create( "sent_rocketball" )
-	ent:SetPos( Vector(0,0,150) )
+	if #spawnpoints > 0 then
+		local spawnpoint = spawnpoints[ math.random(#spawnpoints) ]
+		ent:SetPos( spawnpoint:GetPos() )
+		ent:SetAngles( spawnpoint:GetAngles() )
+	else
+		ent:SetPos( Vector(0,0,200) )
+		ent:SetAngles( Angle(0,0,0) )
+	end
 	ent:Spawn()
 	ent:Activate()
 	

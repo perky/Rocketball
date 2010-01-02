@@ -99,18 +99,6 @@ function ENT:OnPunt( pl )
 	self.CurrentAngle = puntVec:Angle()
 end
 
-/*
-function ENT:Think()
-	local trace = util.QuickTrace( self.Entity:GetPos(), self.Entity:GetForward() * 250, self.Entity )
-	if trace.HitWorld then
-		self.CurrentAngle = trace.HitNormal:Angle()
-		self.Entity:EmitSound( "Rubber.BulletImpact" )
-		--self.PhysObj:AddAngleVelocity(Angle(math.Rand(-115,115), math.Rand(-115,115), math.Rand(-111,115))) 
-	end
-	self.Entity:NextThink( CurTime() + 1 )
-end
-*/
-
 
 /*---------------------------------------------------------
    Name: Physics
