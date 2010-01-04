@@ -1,4 +1,5 @@
 -- SHARED --
+GM.DebugMode = false
 
 GM.Name 	= "Rocketball"
 GM.Author 	= ""

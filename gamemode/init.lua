@@ -123,16 +123,24 @@ end
 
 function GM:GravGunPunt( pl, ent )
 	local dist = ent:GetPos():Distance( pl:EyePos() )
+	--Send distance to client for lag compensation.
+	local rp = RecipientFilter()
+	rp:AddPlayer( pl )               
+	umsg.Start("OnServerPunt", rp)
+		umsg.Float( dist )
+	umsg.End()
+		
 	if ent:GetClass() == "sent_rocketball" and dist < GAMEMODE.PuntLength then
 		ent:OnPunt( pl )
 		power_checknecksnap( pl, ent )
 		SetGlobalString("CustomHudText", "")
 		
+		if GAMEMODE.DebugMode then
+			pl:PrintMessage( HUD_PRINTTALK, "Server: "..dist )
+		end
+		
 		if dist > GAMEMODE.PuntPowerMin and dist < GAMEMODE.PuntPowerMax then 
 			GAMEMODE:Powerup( pl, ent, math.random(1,6) )
-			pl:SetNetworkedInt("powerup", 1)
-		else
-			pl:SetNetworkedInt("powerup", 0)
 		end
 		
 		return true

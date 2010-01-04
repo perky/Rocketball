@@ -4,6 +4,19 @@ local BarScale = 0.7
 local matball = Material("sprites/sent_ball")
 local lastPuntAlpha = 0
 local lastPuntDist  = 0
+local lastPuntCol = Color(255,255,255,255)
+local clientPuntTable = {}
+local serverPuntTable = {}
+local puntIndex = 1
+local compensation = 0
+
+local function GetCompensation()
+	if clientPuntTable[ puntIndex ]  != nil and serverPuntTable[ puntIndex ] != nil then
+		return clientPuntTable[ puntIndex ] - serverPuntTable[ puntIndex ]
+	else
+		return 0
+	end
+end
 
 function GM:HUDPaint()
 	self.BaseClass:HUDPaint()
@@ -19,6 +32,7 @@ function GM:HUDPaint()
 			temp = distance
 		end
 	end
+	temp = temp + compensation
 	
 	if IsValid( Rocketball ) then
 		distance = math.min(temp, BarRange)
@@ -32,34 +46,67 @@ function GM:HUDPaint()
 		draw.RoundedBox( 6, offset, 80, BarWidth, 10, Color(0,0,0,255) )
 		draw.RoundedBox( 6, offset+good, 80, BarWidth-good, 10, Color(0,255,0,255) )
 		draw.RoundedBox( 6, offset+good, 80, BarWidth-best, 10, Color(255,0,0,255) )
-		
+
 		local rr,gg,bb = Rocketball:GetColor()
 		surface.SetDrawColor( rr, gg, bb, 255 ) 
 		surface.SetMaterial(matball)
-		surface.DrawTexturedRect(offset+pos, 50, 64, 64)
+		surface.DrawTexturedRect((offset+pos)-29, 50, 64, 64)
 		
 		if lastPuntAlpha > 0 then
 			lastPuntAlpha = lastPuntAlpha - 1
 			pos = BarWidth - (lastPuntDist * temp)
-			if LocalPlayer():GetNetworkedInt("powerup") == 1 then
-				surface.SetDrawColor( 0, 255, 0, lastPuntAlpha )
-			else
-				surface.SetDrawColor( 255, 255, 255, lastPuntAlpha )
-			end
-			surface.DrawTexturedRect(offset+pos, 50, 64, 64)
+			surface.SetDrawColor( lastPuntCol.r, lastPuntCol.g, lastPuntCol.b, lastPuntAlpha )
+			surface.DrawTexturedRect((offset+pos)-29, 50, 64, 64)
 		end
 	end
-	
 	
 end
 
 function GM:GravGunPunt( pl, ent )
 	local dist = ent:GetPos():Distance( pl:EyePos() )
-	lastPuntAlpha = 150
-	if dist > GAMEMODE.PuntLength then dist = GAMEMODE.PuntLength end
-	lastPuntDist  = dist
+	
+	if GAMEMODE.DebugMode then
+		pl:PrintMessage( HUD_PRINTTALK, "Client1: "..dist )
+	end
+	
+	--Lag compensation
+	clientPuntTable[ puntIndex ] = dist
+	dist = dist + compensation
+	if GAMEMODE.DebugMode then
+		pl:PrintMessage( HUD_PRINTTALK, "Client2: "..dist )
+	end
+	
+	if dist > GAMEMODE.PuntLength then 
+		dist = GAMEMODE.PuntLength
+	end
+	
 	return true
 end
+
+function OnServerPunt( um )
+	local dist = um:ReadFloat()
+	serverPuntTable[ puntIndex ] = dist
+	if clientPuntTable[ puntIndex ]  != nil and serverPuntTable[ puntIndex ] != nil then
+		compensation =  serverPuntTable[ puntIndex ] - clientPuntTable[ puntIndex ]
+	end
+	puntIndex = puntIndex + 1
+	
+	if GAMEMODE.DebugMode then
+		LocalPlayer():PrintMessage( HUD_PRINTTALK, "Comp.: "..compensation )
+	end
+	
+	--Show the last punted ball on hud.
+	lastPuntAlpha = 240
+	lastPuntDist = dist
+	if dist > GAMEMODE.PuntPowerMin and dist < GAMEMODE.PuntPowerMax then
+		lastPuntCol = Color(255,191,0,255)
+	elseif dist < GAMEMODE.PuntLength then
+		lastPuntCol = Color(0,255,0,255)
+	else
+		lastPuntCol = Color(255,255,255,255)
+	end
+end
+usermessage.Hook("OnServerPunt", OnServerPunt)
 ---------------------------------------------------------------------------
 -- As long as you know what you're doing you can edit these
 -- Or if you really know what your doing delete and create your own hud =D
